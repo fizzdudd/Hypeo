@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/**/*.php';
+
+/* Paleta y tipografías de los mockups de Hypeo */
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --color-ink: #1B1916;        /* texto y superficies oscuras */
+    --color-ink-2: #3A3530;
+    --color-paper: #F7F5F1;      /* fondo de la app */
+    --color-sand: #EDE9E2;       /* chips neutros */
+    --color-line: #E4DFD7;       /* bordes */
+    --color-line-2: #CFC9BF;
+    --color-muted: #6E675F;      /* texto secundario */
+    --color-muted-2: #8E877E;
+    --color-hype: #EE5A2F;       /* acento naranja */
+    --color-hype-dark: #B8381A;
+    --color-hype-soft: #FCE6DC;
+    --color-ok: #2F7A4A;
+    --color-danger: #C73A1A;
+}
+
+@layer base {
+    html { -webkit-tap-highlight-color: transparent; }
+    body { @apply bg-paper text-ink font-sans antialiased; }
+    [data-lucide] { stroke-width: 1.75; }
+}
+
+@layer components {
+    .label { @apply text-[13px] font-medium text-muted; }
+    .field {
+        @apply w-full rounded-[14px] border-[1.5px] border-line bg-white px-4 text-base outline-none transition
+               placeholder:text-muted-2 focus:border-ink;
+    }
+    .field-error { @apply border-danger; }
+    .error-text { @apply text-[13px] text-danger; }
+    .eyebrow { @apply font-mono text-[11px] font-medium tracking-[.06em] uppercase; }
+
+    .btn {
+        @apply flex h-14 w-full items-center justify-between rounded-2xl px-5 text-[17px] font-semibold transition
+               active:scale-[.99] disabled:opacity-60;
+    }
+    .btn-dark { @apply bg-ink text-paper hover:bg-ink-2; }
+    .btn-hype { @apply bg-hype text-ink hover:brightness-105; }
+    .btn-icon {
+        @apply flex size-11 items-center justify-center rounded-full border-[1.5px] border-line bg-paper transition hover:border-ink;
+    }
+    .card { @apply rounded-[20px] border-[1.5px] border-line bg-white; }
+    .chip { @apply rounded-[10px] px-2.5 py-1 text-[13px] font-medium; }
+    .placeholder-photo { background: repeating-linear-gradient(135deg, #EFEAE2 0 6px, #E4DED4 6px 12px); }
+
+    /* Opciones tipo radio con aspecto de tarjeta */
+    .opt input { @apply sr-only; }
+    .opt-seg { @apply flex h-[38px] cursor-pointer items-center justify-center rounded-xl border-[1.5px] border-line text-sm font-medium transition; }
+    .opt input:checked + .opt-seg { @apply border-ink bg-ink text-paper; }
+    .opt input:focus-visible + .opt-seg,
+    .opt input:focus-visible + .opt-red,
+    .opt input:focus-visible + .opt-tono { @apply ring-2 ring-hype ring-offset-2; }
+
+    .opt-red { @apply flex cursor-pointer flex-col gap-3.5 rounded-2xl border-[1.5px] border-line bg-white p-3 transition hover:border-ink-2; }
+    .opt input:checked + .opt-red { @apply border-ink bg-ink text-paper; }
+    .opt-red .check { @apply hidden text-hype; }
+    .opt input:checked + .opt-red .check { @apply block; }
+    .opt input:checked + .opt-red .sub { @apply text-[#B5AEA4]; }
+
+    .opt-tono { @apply flex cursor-pointer items-center justify-between rounded-[14px] border-[1.5px] border-line bg-white px-3.5 py-[11px] transition hover:border-ink-2; }
+    .opt-tono .ejemplo { @apply hidden text-[13px] text-[#8A3A22]; }
+    .opt-tono .dot { @apply size-5 rounded-full border-[1.5px] border-line-2; }
+    .opt input:checked + .opt-tono { @apply border-hype bg-hype-soft; }
+    .opt input:checked + .opt-tono .ejemplo { @apply block; }
+    .opt input:checked + .opt-tono .dot { @apply border-[6px] border-hype; }
+}
+
+/* Hoja inferior (dialog nativo) */
+dialog.sheet {
+    @apply m-0 mt-auto w-full max-w-none bg-transparent p-0;
+    max-height: 100dvh;
+}
+dialog.sheet::backdrop { background: rgba(27, 25, 22, .45); }
+dialog.sheet[open] > div { animation: sheet-up .22s ease-out; }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { animation: spin .8s linear infinite; }
