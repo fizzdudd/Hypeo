@@ -9,8 +9,10 @@
       "excludeFiles": "{node_modules/**,tests/**,Documentos/**,Mockups/**,*.zip,database/supabase/**,storage/logs/**,storage/framework/views/**}"
     }
   },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.php" }
+  "routes": [
+    { "src": "/build/(.*)", "dest": "/build/$1" },
+    { "src": "/(favicon\\.ico|robots\\.txt)", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/api/index.php" }
   ],
   "env": {
     "APP_ENV": "production",
