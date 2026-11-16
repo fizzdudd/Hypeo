@@ -11,13 +11,7 @@
         <h1 class="font-display text-[34px] leading-[1.04] font-bold tracking-tight">¿Qué vamos a<br>vender hoy?</h1>
     </div>
 
-    <div class="mx-5 mt-[18px] flex gap-2">
-        <form method="GET" action="{{ route('productos.index') }}" role="search"
-              class="flex h-[46px] flex-1 items-center gap-2.5 rounded-[14px] border-[1.5px] border-line bg-white px-3.5 focus-within:border-ink">
-            <i data-lucide="search" class="size-[18px] text-muted-2"></i>
-            <input name="q" value="{{ $busqueda }}" placeholder="Buscar producto" aria-label="Buscar producto"
-                   class="w-full bg-transparent text-[15px] outline-none placeholder:text-muted-2">
-        </form>
+    <div class="mx-5 mt-[18px] flex justify-end">
         <a href="{{ route('productos.create') }}"
            class="flex h-[46px] items-center gap-1.5 rounded-[14px] bg-ink px-3.5 text-[15px] font-semibold text-paper hover:bg-ink-2">
             <i data-lucide="plus" class="size-[18px]"></i>Nuevo
@@ -49,15 +43,10 @@
             </div>
         @empty
             <div class="mt-4 flex flex-col items-center gap-3 rounded-[20px] border-[1.5px] border-dashed border-line-2 px-6 py-10 text-center">
-                <i data-lucide="{{ $busqueda ? 'search-x' : 'package-plus' }}" class="size-8 text-hype"></i>
-                @if ($busqueda)
-                    <p class="font-display text-xl font-semibold">Sin resultados para “{{ $busqueda }}”</p>
-                    <a href="{{ route('productos.index') }}" class="text-sm font-semibold text-hype-dark">Ver todos</a>
-                @else
-                    <p class="font-display text-xl font-semibold">Aún no tienes productos</p>
-                    <p class="text-sm text-muted">Cuéntanos qué vendes y a quién; con eso la IA escribe tus campañas.</p>
-                    <a href="{{ route('productos.create') }}" class="btn btn-dark mt-2 w-auto gap-3"><span>Crear mi primer producto</span><i data-lucide="plus" class="size-5"></i></a>
-                @endif
+                <i data-lucide="package-plus" class="size-8 text-hype"></i>
+                <p class="font-display text-xl font-semibold">Aún no tienes productos</p>
+                <p class="text-sm text-muted">Cuéntanos qué vendes y a quién; con eso la IA escribe tus campañas.</p>
+                <a href="{{ route('productos.create') }}" class="btn btn-dark mt-2 w-auto gap-3"><span>Crear mi primer producto</span><i data-lucide="plus" class="size-5"></i></a>
             </div>
         @endforelse
     </div>

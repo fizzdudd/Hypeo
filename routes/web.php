@@ -29,13 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/productos/{producto}/campanas', [CampanaController::class, 'store'])
         ->middleware('throttle:groq')->name('campanas.store');
 
-    // Flujo 4 · Historial
-    Route::get('/campanas', [CampanaController::class, 'index'])->name('campanas.index');
+    // Flujo 4 · Ver y eliminar campañas
     Route::get('/campanas/{campana}', [CampanaController::class, 'show'])->name('campanas.show');
-    Route::get('/campanas/{campana}/editar', [CampanaController::class, 'edit'])->name('campanas.edit');
-    Route::put('/campanas/{campana}', [CampanaController::class, 'update'])->name('campanas.update');
-    Route::post('/campanas/{campana}/regenerar', [CampanaController::class, 'regenerate'])
-        ->middleware('throttle:groq')->name('campanas.regenerate');
-    Route::post('/campanas/{campana}/restaurar', [CampanaController::class, 'restore'])->name('campanas.restore');
     Route::delete('/campanas/{campana}', [CampanaController::class, 'destroy'])->name('campanas.destroy');
 });

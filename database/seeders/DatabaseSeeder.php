@@ -91,8 +91,7 @@ class DatabaseSeeder extends Seeder
 
     private function campana($producto, string $red, string $tono, $fecha, array $datos): void
     {
-        $campana = $producto->campanas()->make(['red' => $red, 'tono' => $tono]);
-        $campana->aplicarGeneracion($datos);
+        $campana = $producto->campanas()->make(['red' => $red, 'tono' => $tono, ...$datos]);
         $campana->created_at = $fecha;
         $campana->updated_at = $fecha;
         $campana->save();

@@ -14,11 +14,11 @@
             <i data-lucide="sparkles" class="size-[26px] text-ink"></i>
         </a>
     </div>
-    <a href="{{ route('campanas.index') }}" @class([
+    <a href="{{ route('perfil') }}" @class([
         'flex flex-col items-center gap-1 text-xs',
-        'font-semibold text-ink' => $active === 'campanas',
-        'font-medium text-muted-2 hover:text-ink' => $active !== 'campanas',
-    ]) @if($active === 'campanas') aria-current="page" @endif>
-        <i data-lucide="layers" class="size-6"></i>Campañas
+        'font-semibold text-ink' => $active === 'perfil',
+        'font-medium text-muted-2 hover:text-ink' => $active !== 'perfil',
+    ]) @if($active === 'perfil') aria-current="page" @endif>
+        <i data-lucide="user" class="size-6"></i>Perfil
     </a>
 </nav>

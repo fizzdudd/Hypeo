@@ -28,7 +28,7 @@ class HypeoTest extends TestCase
     public function test_las_rutas_protegidas_redirigen_al_login(): void
     {
         $this->get('/productos')->assertRedirect('/login');
-        $this->get('/campanas')->assertRedirect('/login');
+        $this->get('/generar')->assertRedirect('/login');
     }
 
     public function test_registro_crea_usuario_e_inicia_sesion(): void
@@ -106,7 +106,6 @@ class HypeoTest extends TestCase
         $campana = $producto->campanas()->first();
         $this->assertSame('Enciende la calma.', $campana->eslogan);
         $this->assertSame(['#velas', '#hechoenchile'], $campana->hashtags);
-        $this->assertSame('Enciende la calma.', $campana->texto_ia['eslogan']);
 
         Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer test-key')
             && $request['model'] === config('services.groq.model'));
@@ -142,30 +141,6 @@ class HypeoTest extends TestCase
         $this->assertDatabaseCount('campanas', 0);
     }
 
-    public function test_editar_y_restaurar_texto_original(): void
-    {
-        $campana = Campana::factory()->create(['red' => 'instagram']);
-        $user = $campana->producto->user;
-        $original = $campana->publicacion;
-
-        $this->actingAs($user)->put(route('campanas.update', $campana), [
-            'eslogan' => $campana->eslogan,
-            'publicacion' => 'Texto editado por mí.',
-            'hashtags' => 'velas #chile',
-            'cta' => $campana->cta,
-            'idea_imagen' => $campana->idea_imagen,
-        ])->assertRedirect(route('campanas.show', $campana));
-
-        $campana->refresh();
-        $this->assertTrue($campana->editada);
-        $this->assertSame(['#velas', '#chile'], $campana->hashtags);
-
-        $this->actingAs($user)->post(route('campanas.restore', $campana));
-        $campana->refresh();
-        $this->assertFalse($campana->editada);
-        $this->assertSame($original, $campana->publicacion);
-    }
-
     public function test_todas_las_pantallas_cargan(): void
     {
         $campana = Campana::factory()->create();
@@ -177,9 +152,7 @@ class HypeoTest extends TestCase
             route('productos.show', $campana->producto),
             route('productos.edit', $campana->producto),
             route('campanas.create', $campana->producto),
-            route('campanas.index'),
             route('campanas.show', $campana),
-            route('campanas.edit', $campana),
             route('perfil'),
         ] as $url) {
             $this->actingAs($user)->get($url)->assertOk();
@@ -207,14 +180,14 @@ class HypeoTest extends TestCase
     public function test_url_de_imagen_usa_prompt_de_la_ia_y_formato_de_la_red(): void
     {
         $campana = Campana::factory()->create(['red' => 'tiktok', 'prompt_imagen' => 'lavender candle on nightstand']);
-        $campana->texto_ia = [...$campana->texto_ia, 'idea_imagen' => $campana->idea_imagen];
 
         $url = $campana->urlImagen();
         $this->assertStringStartsWith('https://image.pollinations.ai/prompt/', $url);
         $this->assertStringContainsString(rawurlencode('lavender candle on nightstand'), $url);
         $this->assertStringContainsString('width=576&height=1024', $url);
 
-        // Si el usuario edita la idea de imagen, se usa su texto
+        // Sin prompt en inglés, se usa la idea de imagen
+        $campana->prompt_imagen = null;
         $campana->idea_imagen = 'Vela en la playa';
         $this->assertStringContainsString(rawurlencode('Vela en la playa'), $campana->urlImagen());
 

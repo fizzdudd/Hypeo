@@ -3,6 +3,8 @@
 **Curso:** IIP323W — Tecnologías y Aplicaciones Web y Móviles · 2026-3
 **Equipo:** Fabián Salinas Donoso · Ignacio Sarmiento
 
+**Producción:** https://hipe0.vercel.app
+
 Hypeo es una aplicación web **mobile-first** en Laravel. El usuario registra sus productos con su público objetivo, elige una red social y un tono, y la IA de **Groq** genera una campaña lista para publicar: eslogan, publicación, hashtags, llamado a la acción e idea de imagen.
 
 ---
@@ -11,12 +13,13 @@ Hypeo es una aplicación web **mobile-first** en Laravel. El usuario registra su
 
 | Capa | Tecnología |
 |---|---|
-| Lenguajes | PHP 8.2+, JavaScript (ES modules), HTML (Blade), CSS |
+| Lenguajes | PHP 8.4, JavaScript (ES modules), HTML (Blade), CSS, SQL |
 | Framework | Laravel 12, con arquitectura MVC |
 | Vistas | Blade (layout + componentes anónimos) |
 | Estilos | Tailwind CSS 4, compilado con Vite 7 |
 | Íconos / fuentes | Lucide (solo los íconos usados) · Bricolage Grotesque, Instrument Sans, JetBrains Mono |
-| Base de datos | SQLite + migraciones, seeders y factories de Eloquent |
+| Base de datos | PostgreSQL en **Supabase** (producción) · SQLite (desarrollo y tests) · migraciones, seeders y factories de Eloquent |
+| Hosting | **Vercel**: serverless con el runtime `vercel-php@0.8.0`; despliegue automático desde GitHub (`main`) |
 | IA (texto) | API de Groq (compatible con OpenAI), modelo `openai/gpt-oss-20b` |
 | IA (imagen) | Pollinations: gratuito y sin API key; el navegador carga la imagen desde una URL |
 | Cliente HTTP | `Http::withToken()` de Laravel |
@@ -36,20 +39,40 @@ Controladores ── AuthController · ProductoController · CampanaController �
    │       ├── Policies (ProductoPolicy, CampanaPolicy) vía Gate::authorize
    │       └── GroqService ──HTTPS──► api.groq.com/openai/v1/chat/completions
    ▼
-Modelos Eloquent ── User 1─* Producto 1─* Campana   (SQLite)
+Modelos Eloquent ── User 1─* Producto 1─* Campana
+   ▼
+PostgreSQL (Supabase, Transaction pooler :6543) — también guarda sesiones y caché
 ```
 
-- **Modelo:** `User` → `hasMany(Producto)` y `hasManyThrough(Campana)`. `Producto` → `belongsTo(User)` y `hasMany(Campana)`. Los intereses, los hashtags y el respaldo del texto de la IA (`texto_ia`) se guardan como JSON con *casts*.
+### Despliegue
+
+```
+GitHub (main) ──push──► Vercel ── build: npm run build + composer install
+                          │
+   /build/*, favicon ─────┤ archivos estáticos (public/)
+   todo lo demás ─────────┴► función serverless api/index.php → Laravel (PHP 8.4)
+                                   │                 │
+                                   ▼                 ▼
+                         Supabase PostgreSQL    Groq · Pollinations
+```
+
+- **Vercel** ejecuta Laravel como una función serverless (`api/index.php` → `public/index.php`). [vercel.json](../vercel.json) define el runtime, las rutas y las variables que no son secretas. Como el disco es temporal, los cachés de Laravel y las vistas compiladas van a `/tmp` y los logs a `stderr` (se ven en Vercel → Logs).
+- **Supabase** guarda todo lo persistente: usuarios, productos, campañas, sesiones y caché, que se configuran con `SESSION_DRIVER` y `CACHE_STORE` en `database`. El esquema y los datos de demo están en [database/supabase/hypeo.sql](../database/supabase/hypeo.sql), generado desde las migraciones.
+- **Conexión:** se usa el *Transaction pooler* (puerto 6543), pensado para serverless, con `PDO::PGSQL_ATTR_DISABLE_PREPARES`, porque el pooler no admite prepared statements con nombre. Se usa SSL obligatorio.
+- **Variables secretas** (solo en Vercel, nunca en Git): `APP_KEY`, `DB_URL`, `GROQ_API_KEY`.
+- `trustProxies('*')` hace que Laravel genere URLs `https://` detrás del proxy de Vercel.
+
+- **Modelo:** `User` → `hasMany(Producto)` y `hasManyThrough(Campana)`. `Producto` → `belongsTo(User)` y `hasMany(Campana)`. Los intereses y los hashtags se guardan como JSON con *casts*. Las columnas `texto_ia` y `editada` siguen en la tabla `campanas`, pero el código ya no las usa.
 - **Vista:** un layout `x-layouts.app` y los componentes `bottom-nav`, `top-bar`, `sheet` (hoja inferior con `<dialog>`), `campana-card`, `generando` y `error-ia`.
 - **Controlador:** controladores delgados. La llamada a la IA está aislada en `App\Services\GroqService`.
 
-## 3. Funcionalidades (13 pantallas de los mockups)
+## 3. Funcionalidades (versión acotada)
 
 1. **Acceso:** registro, inicio y cierre de sesión con autenticación escrita a mano (`Auth::attempt`, contraseñas con hash, regeneración de la sesión). El registro muestra la fuerza de la contraseña.
-2. **Productos (CRUD):** nombre, descripción, precio en CLP y público objetivo (rango de edad, intereses como etiquetas y ubicación), con búsqueda por nombre.
+2. **Productos (CRUD):** nombre, descripción, precio en CLP y público objetivo (rango de edad, intereses como etiquetas y ubicación).
 3. **Generar campaña con IA:** se elige una red (Instagram, TikTok, Facebook o LinkedIn) y un tono (cercano, profesional, divertido o elegante). Mientras se genera aparece una pantalla de espera con los pasos, y luego el resultado con 5 piezas que se copian por separado.
-4. **Imagen con IA y vista previa:** Groq escribe un prompt de imagen en inglés y Pollinations genera la foto en el formato de la red (cuadrada, vertical u horizontal). La vista previa muestra la publicación con esa imagen y un "ver más" desplegable. Si el usuario edita la idea de imagen, la foto se genera con su texto.
-5. **Historial:** las campañas de cada producto y la lista general, con filtro por red y agrupadas por fecha. Se pueden **regenerar**, **editar** cada pieza (con un contador según el límite de la red), **volver al texto original de la IA**, copiar y eliminar.
+4. **Imagen con IA y vista previa:** Groq escribe un prompt de imagen en inglés y Pollinations genera la foto en el formato de la red (cuadrada, vertical u horizontal). La vista previa muestra la publicación con esa imagen y un "ver más" desplegable.
+5. **Historial por producto:** el detalle de cada producto lista sus campañas. Cada campaña se puede ver, copiar y eliminar. No hay lista general de campañas, filtro por red, edición, regeneración ni restauración.
 6. **Perfil:** totales de productos y campañas, y cierre de sesión con confirmación.
 7. **Errores de la IA:** un 429 muestra un mensaje amable con una cuenta regresiva para reintentar. También se cubren la respuesta vacía o con formato inválido y la falta de conexión. En todos los casos se conserva la selección del usuario.
 
@@ -65,11 +88,12 @@ Modelos Eloquent ── User 1─* Producto 1─* Campana   (SQLite)
 - Middleware `auth` en todas las rutas privadas y `guest` en las de acceso. `throttle` en el login.
 - **Privacidad:** cada acción usa `Gate::authorize` con las policies, y un usuario no puede ver ni modificar productos ni campañas de otros (responde 403).
 - Validación en el backend, CSRF en todos los formularios, asignación masiva limitada con `$fillable` y Blade escapa la salida.
-- El `.env` con la API key no se sube a GitHub.
+- El `.env` con la API key no se sube a GitHub. En producción, los secretos viven en las variables de entorno de Vercel.
+- **Supabase:** RLS está activado en todas las tablas. La API REST pública de Supabase (con la clave `anon`) no puede leer datos; solo Laravel accede, conectándose directo a Postgres.
 
 ## 6. Calidad
 
-Hay 12 tests de feature que cubren: rutas protegidas, registro, login fallido, normalización de productos, aislamiento entre usuarios, generación con Groq simulada, error 429, respuesta incompleta, edición y restauración, que todas las pantallas carguen, sesión vencida (419) y la URL de la imagen según la red. Para la demo, el seeder crea a la usuaria Valentina (`valentina@luzdecerro.cl` / `password`) con 3 productos y 5 campañas.
+Hay 11 tests de feature que cubren: rutas protegidas, registro, login fallido, normalización de productos, aislamiento entre usuarios, generación con Groq simulada, error 429, respuesta incompleta, que todas las pantallas carguen, sesión vencida (419) y la URL de la imagen según la red. El flujo completo (login, generación y guardado) se verificó en producción. Para la demo, el seeder y el SQL de Supabase crean a la usuaria Valentina (`valentina@luzdecerro.cl` / `password`) con 3 productos y 5 campañas.
 
 ## 7. Fuera del alcance del MVP
 

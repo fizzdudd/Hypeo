@@ -13,21 +13,15 @@ class CampanaFactory extends Factory
 {
     public function definition(): array
     {
-        $piezas = [
+        return [
+            'producto_id' => Producto::factory(),
+            'red' => fake()->randomElement(array_keys(Campana::REDES)),
+            'tono' => fake()->randomElement(array_keys(Campana::TONOS)),
             'eslogan' => fake()->sentence(5),
             'publicacion' => fake()->paragraph(),
             'hashtags' => ['#velas', '#hechoenchile'],
             'cta' => 'Escríbenos por DM',
             'idea_imagen' => fake()->sentence(8),
-        ];
-
-        return [
-            'producto_id' => Producto::factory(),
-            'red' => fake()->randomElement(array_keys(Campana::REDES)),
-            'tono' => fake()->randomElement(array_keys(Campana::TONOS)),
-            ...$piezas,
-            'texto_ia' => $piezas,
-            'editada' => false,
         ];
     }
 }

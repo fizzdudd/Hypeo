@@ -9,6 +9,11 @@
 
 BEGIN;
 
+-- Limpieza: permite volver a ejecutar este script sin errores
+DROP TABLE IF EXISTS public.campanas, public.productos, public.sessions, public.password_reset_tokens,
+    public.users, public.cache, public.cache_locks, public.jobs, public.job_batches,
+    public.failed_jobs, public.migrations CASCADE;
+
 CREATE TABLE public.cache (
     key character varying(255) NOT NULL,
     value text NOT NULL,

@@ -18,18 +18,9 @@
             <button type="button" data-open-dialog="opciones" class="btn-icon" aria-label="Más opciones"><i data-lucide="more-horizontal" class="size-5"></i></button>
         </x-top-bar>
 
-        <x-error-ia>
-            <div class="mt-1 flex gap-2">
-                <button type="submit" form="form-regenerar" data-countdown="{{ session('error_ia.espera', 0) }}"
-                        class="flex h-11 items-center gap-2 rounded-[14px] bg-hype px-4 text-[15px] font-semibold text-ink disabled:opacity-70">
-                    <i data-lucide="refresh-cw" class="size-4"></i>Reintentar<span data-countdown-text></span>
-                </button>
-            </div>
-        </x-error-ia>
-
         {{-- Contenido: las 5 piezas, cada una copiable --}}
         <section data-panel="contenido" class="flex flex-col gap-2 px-5 pt-1.5">
-            <div class="eyebrow text-muted">{{ $producto->nombre }} · {{ $red['nombre'] }} · {{ $campana->tonoInfo()['nombre'] }}@if($campana->editada) · <span class="text-hype-dark">editada</span>@endif</div>
+            <div class="eyebrow text-muted">{{ $producto->nombre }} · {{ $red['nombre'] }} · {{ $campana->tonoInfo()['nombre'] }}</div>
 
             <div class="flex flex-col gap-2 rounded-[20px] bg-ink p-4 text-paper">
                 <div class="eyebrow flex justify-between text-hype">
@@ -42,10 +33,7 @@
             <div class="card flex flex-col gap-1.5 px-4 py-3.5">
                 <div class="eyebrow flex justify-between text-muted">
                     <span>Publicación</span>
-                    <div class="flex gap-3">
-                        <a href="{{ route('campanas.edit', [$campana, 'pieza' => 'publicacion']) }}" aria-label="Editar publicación" class="hover:text-ink"><i data-lucide="pencil" class="size-4"></i></a>
-                        <button type="button" data-copy="#p-publicacion" aria-label="Copiar publicación" class="hover:text-ink"><i data-lucide="copy" class="size-4"></i></button>
-                    </div>
+                    <button type="button" data-copy="#p-publicacion" aria-label="Copiar publicación" class="hover:text-ink"><i data-lucide="copy" class="size-4"></i></button>
                 </div>
                 <p id="p-publicacion" class="text-[15px] leading-[1.45] whitespace-pre-line">{{ $campana->publicacion }}</p>
             </div>
@@ -146,15 +134,7 @@
 
     <x-slot:footer>
         <div id="footer-campana">
-            <div data-panel="contenido" class="grid grid-cols-[52px_52px_1fr] gap-2">
-                <form id="form-regenerar" method="POST" action="{{ route('campanas.regenerate', $campana) }}"
-                      data-generar data-red="{{ $red['nombre'] }}" data-tono="{{ $campana->tonoInfo()['nombre'] }}">
-                    @csrf
-                    <button type="submit" aria-label="Regenerar" title="Regenerar"
-                            class="flex size-[52px] items-center justify-center rounded-2xl border-[1.5px] border-ink hover:bg-sand"><i data-lucide="refresh-cw" class="size-5"></i></button>
-                </form>
-                <a href="{{ route('campanas.edit', $campana) }}" aria-label="Editar texto" title="Editar texto"
-                   class="flex size-[52px] items-center justify-center rounded-2xl border-[1.5px] border-ink hover:bg-sand"><i data-lucide="pencil" class="size-5"></i></a>
+            <div data-panel="contenido">
                 <button type="button" data-copy="#texto-completo" class="btn btn-dark h-[52px] text-base">
                     <span data-copy-label>Copiar todo</span><i data-lucide="copy" class="size-[18px]"></i>
                 </button>
@@ -168,19 +148,11 @@
     </x-slot:footer>
 
     <x-slot:after>
-        <x-generando :producto="$producto" />
-
         <dialog id="opciones" class="sheet" aria-label="Opciones de la campaña">
             <div class="mx-auto flex w-full max-w-[480px] flex-col gap-1 rounded-t-[32px] bg-paper px-6 pt-3 pb-10 text-ink">
                 <div class="mb-3 h-[5px] w-10 self-center rounded-full bg-line-2"></div>
                 <a href="{{ route('campanas.create', [$producto, 'red' => $campana->red, 'tono' => $campana->tono]) }}"
                    class="flex items-center gap-3 border-b border-line py-3.5 font-medium"><i data-lucide="sparkles" class="size-5"></i>Nueva campaña con otra red o tono</a>
-                @if ($campana->editada)
-                    <form method="POST" action="{{ route('campanas.restore', $campana) }}">
-                        @csrf
-                        <button class="flex w-full items-center gap-3 border-b border-line py-3.5 font-medium"><i data-lucide="rotate-ccw" class="size-5"></i>Volver al texto original de la IA</button>
-                    </form>
-                @endif
                 <button type="button" data-close-dialog data-open-dialog="eliminar-campana"
                         class="flex items-center gap-3 py-3.5 font-medium text-danger"><i data-lucide="trash-2" class="size-5"></i>Eliminar campaña</button>
             </div>
@@ -189,7 +161,6 @@
         <x-sheet id="eliminar-campana" title="¿Eliminar campaña?" :message="'Se quitará del historial de '.$producto->nombre.'. Esta acción no se puede deshacer.'">
             <form method="POST" action="{{ route('campanas.destroy', $campana) }}">
                 @csrf @method('DELETE')
-                <input type="hidden" name="volver" value="producto">
                 <button class="flex h-[52px] w-full items-center rounded-2xl bg-danger px-[18px] font-semibold text-white">Eliminar</button>
             </form>
         </x-sheet>
