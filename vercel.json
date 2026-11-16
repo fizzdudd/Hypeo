@@ -31,6 +31,6 @@
     "QUEUE_CONNECTION": "sync",
     "DB_CONNECTION": "pgsql",
     "DB_SSLMODE": "require",
-    "DB_EMULATE_PREPARES": "true"
+    "DB_DISABLE_PREPARES": "true"
   }
 }

@@ -98,9 +98,10 @@ return [
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
             // Supabase "Transaction pooler" (puerto 6543, ideal para serverless/Vercel)
-            // no admite prepared statements del servidor: se emulan en PDO.
+            // no admite prepared statements con nombre: PDO envía cada consulta con
+            // sus parámetros sin preparar. (Emularlas rompe los campos booleanos.)
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
-                PDO::ATTR_EMULATE_PREPARES => (bool) env('DB_EMULATE_PREPARES', false),
+                PDO::PGSQL_ATTR_DISABLE_PREPARES => (bool) env('DB_DISABLE_PREPARES', false),
             ]) : [],
         ],
 
