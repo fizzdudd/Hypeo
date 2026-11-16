@@ -39,3 +39,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/campanas/{campana}/restaurar', [CampanaController::class, 'restore'])->name('campanas.restore');
     Route::delete('/campanas/{campana}', [CampanaController::class, 'destroy'])->name('campanas.destroy');
 });
+
+// TEMPORAL: diagnóstico de despliegue (se elimina después)
+Route::get('/diag-7f3k9q', function () {
+    $out = ['php' => PHP_VERSION, 'pdo_pgsql' => extension_loaded('pdo_pgsql'), 'db_url_set' => filled(env('DB_URL')), 'conn' => config('database.default'), 'app_key' => filled(config('app.key'))];
+    try { $out['db'] = \Illuminate\Support\Facades\DB::select('select count(*) as n from users')[0]->n; } catch (\Throwable $e) { $out['db_error'] = $e->getMessage(); }
+    try { session()->put('x', 1); $out['session'] = 'ok'; } catch (\Throwable $e) { $out['session_error'] = $e->getMessage(); }
+    return response()->json($out);
+})->withoutMiddleware([\Illuminate\Session\Middleware\StartSession::class, \Illuminate\View\Middleware\ShareErrorsFromSession::class, \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
