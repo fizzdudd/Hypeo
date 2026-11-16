@@ -1,5 +1,5 @@
 {{-- 12 · Perfil y cerrar sesión --}}
-<x-layouts.app title="Perfil" nav="productos">
+<x-layouts.app title="Perfil" nav="perfil">
     <x-top-bar :back="route('productos.index')" />
 
     <div class="flex flex-col gap-5 px-5 pt-2">
@@ -16,10 +16,10 @@
                 <span class="font-display text-3xl font-bold">{{ $totalProductos }}</span>
                 <span class="font-mono text-[11px] font-medium text-muted">PRODUCTOS</span>
             </a>
-            <a href="{{ route('campanas.index') }}" class="flex flex-col gap-0.5 px-4 py-3.5">
+            <div class="flex flex-col gap-0.5 px-4 py-3.5">
                 <span class="font-display text-3xl font-bold">{{ $totalCampanas }}</span>
                 <span class="font-mono text-[11px] font-medium text-muted">CAMPAÑAS</span>
-            </a>
+            </div>
         </div>
 
         <div class="flex flex-col text-base font-medium">

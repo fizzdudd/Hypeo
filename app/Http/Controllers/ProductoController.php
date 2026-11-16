@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Campana;
 use App\Models\Producto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,17 +15,9 @@ class ProductoController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $busqueda = trim((string) $request->query('q'));
-
-        $productos = $user->productos()
-            ->withCount('campanas')
-            ->when($busqueda, fn ($q) => $q->where('nombre', 'like', "%{$busqueda}%"))
-            ->latest()
-            ->get();
 
         return view('productos.index', [
-            'productos' => $productos,
-            'busqueda' => $busqueda,
+            'productos' => $user->productos()->withCount('campanas')->latest()->get(),
             'totalProductos' => $user->productos()->count(),
             'totalCampanas' => $user->campanas()->count(),
         ]);
@@ -46,18 +37,13 @@ class ProductoController extends Controller
     }
 
     /** 05 · Detalle del producto + historial de campañas */
-    public function show(Request $request, Producto $producto): View
+    public function show(Producto $producto): View
     {
         Gate::authorize('view', $producto);
 
-        $red = $request->query('red');
-        $red = array_key_exists((string) $red, Campana::REDES) ? $red : null;
-
         return view('productos.show', [
             'producto' => $producto,
-            'campanas' => $producto->campanas()->when($red, fn ($q) => $q->where('red', $red))->get(),
-            'totalCampanas' => $producto->campanas()->count(),
-            'redActiva' => $red,
+            'campanas' => $producto->campanas()->get(),
         ]);
     }
 

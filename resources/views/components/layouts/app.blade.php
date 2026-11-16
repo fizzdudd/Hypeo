@@ -1,6 +1,6 @@
 @props([
     'title' => null,
-    'nav' => null,       // 'productos' | 'campanas' → muestra la barra inferior
+    'nav' => null,       // 'productos' | 'perfil' → muestra la barra inferior
     'dark' => false,     // fondo oscuro (login)
     'pad' => true,       // deja espacio para la barra / botón fijo inferior
 ])

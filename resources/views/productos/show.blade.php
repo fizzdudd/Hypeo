@@ -1,4 +1,5 @@
 {{-- 05 · Detalle del producto + historial --}}
+@php($totalCampanas = $campanas->count())
 <x-layouts.app :title="$producto->nombre" :pad="false">
     <div class="placeholder-photo relative h-[230px] flex-none">
         <div class="flex justify-between px-5 pt-4">
@@ -28,23 +29,14 @@
             <i data-lucide="arrow-right" class="size-5"></i>
         </a>
 
-        <div class="mt-1.5 flex items-center justify-between">
-            <h2 class="font-display text-lg font-semibold">Historial · {{ $totalCampanas }}</h2>
-            <nav class="flex gap-1 font-mono text-xs font-medium" aria-label="Filtrar por red">
-                <a href="{{ route('productos.show', $producto) }}" @class(['rounded-lg px-2 py-[5px]', 'bg-ink text-paper' => ! $redActiva, 'border border-line hover:border-ink' => $redActiva])>TODAS</a>
-                @foreach (\App\Models\Campana::REDES as $clave => $red)
-                    <a href="{{ route('productos.show', [$producto, 'red' => $clave]) }}" title="{{ $red['nombre'] }}"
-                       @class(['rounded-lg px-2 py-[5px]', 'bg-ink text-paper' => $redActiva === $clave, 'border border-line hover:border-ink' => $redActiva !== $clave])>{{ $red['abrev'] }}</a>
-                @endforeach
-            </nav>
-        </div>
+        <h2 class="mt-1.5 font-display text-lg font-semibold">Historial · {{ $totalCampanas }}</h2>
 
         <div class="flex flex-col gap-2">
             @forelse ($campanas as $campana)
                 <x-campana-card :campana="$campana" />
             @empty
                 <p class="rounded-2xl border-[1.5px] border-dashed border-line-2 px-4 py-6 text-center text-sm text-muted">
-                    {{ $redActiva ? 'No hay campañas para esta red.' : 'Todavía no hay campañas. ¡Genera la primera!' }}
+                    Todavía no hay campañas. ¡Genera la primera!
                 </p>
             @endforelse
         </div>

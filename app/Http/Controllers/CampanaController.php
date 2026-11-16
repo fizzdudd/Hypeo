@@ -16,27 +16,6 @@ class CampanaController extends Controller
 {
     public function __construct(private GroqService $groq) {}
 
-    /** 11 · Todas las campañas, agrupadas por fecha y filtrables por red */
-    public function index(Request $request): View
-    {
-        $red = $request->query('red');
-        $red = array_key_exists((string) $red, Campana::REDES) ? $red : null;
-
-        $base = $request->user()->campanas();
-
-        $campanas = (clone $base)->with('producto')
-            ->when($red, fn ($q) => $q->where('red', $red))
-            ->latest('campanas.created_at')
-            ->get()
-            ->groupBy(fn (Campana $c) => $c->created_at->gte(now()->startOfWeek()) ? 'ESTA SEMANA' : 'ANTES');
-
-        return view('campanas.index', [
-            'grupos' => $campanas,
-            'redActiva' => $red,
-            'total' => $base->count(),
-        ]);
-    }
-
     /** Botón central de la barra: elegir para qué producto generar */
     public function elegirProducto(Request $request): View|RedirectResponse
     {
@@ -78,9 +57,7 @@ class CampanaController extends Controller
             ]);
         }
 
-        $campana = $producto->campanas()->make($datos);
-        $campana->aplicarGeneracion($generado);
-        $campana->save();
+        $campana = $producto->campanas()->create([...$datos, ...$generado]);
 
         return redirect()->route('campanas.show', $campana);
     }
@@ -93,90 +70,13 @@ class CampanaController extends Controller
         return view('campanas.show', ['campana' => $campana->load('producto.user')]);
     }
 
-    /** 10 · Editar texto */
-    public function edit(Request $request, Campana $campana): View
-    {
-        Gate::authorize('update', $campana);
-
-        $pieza = $request->query('pieza');
-
-        return view('campanas.edit', [
-            'campana' => $campana,
-            'piezaActiva' => array_key_exists((string) $pieza, Campana::PIEZAS) ? $pieza : 'publicacion',
-        ]);
-    }
-
-    public function update(Request $request, Campana $campana): RedirectResponse
-    {
-        Gate::authorize('update', $campana);
-
-        $limite = Campana::REDES[$campana->red]['limite'];
-
-        $datos = $request->validate([
-            'eslogan' => ['required', 'string', 'max:200'],
-            'publicacion' => ['required', 'string', "max:{$limite}"],
-            'hashtags' => ['nullable', 'string', 'max:500'],
-            'cta' => ['required', 'string', 'max:200'],
-            'idea_imagen' => ['required', 'string', 'max:300'],
-        ]);
-
-        $datos['hashtags'] = collect(preg_split('/[\s,]+/', (string) $datos['hashtags']))
-            ->filter()
-            ->map(fn ($h) => '#'.ltrim($h, '#'))
-            ->unique()->values()->all();
-
-        $campana->fill($datos);
-        $campana->editada = $campana->texto_ia !== null && collect(Campana::PIEZAS)
-            ->keys()
-            ->contains(fn ($k) => $campana->{$k} != ($campana->texto_ia[$k] ?? null));
-        $campana->save();
-
-        return redirect()->route('campanas.show', $campana)->with('ok', 'Texto actualizado.');
-    }
-
-    /** Regenerar: misma red y tono, nueva respuesta de la IA */
-    public function regenerate(Campana $campana): RedirectResponse
-    {
-        Gate::authorize('update', $campana);
-
-        try {
-            $generado = $this->groq->generarCampana($campana->producto, $campana->red, $campana->tono);
-        } catch (GroqException $e) {
-            return back()->with('error_ia', [
-                ...$e->mensajeUsuario(),
-                'tipo' => $e->tipo,
-                'espera' => $e->tipo === GroqException::OCUPADA ? $e->reintentarEn : 0,
-            ]);
-        }
-
-        $campana->aplicarGeneracion($generado);
-        $campana->save();
-
-        return redirect()->route('campanas.show', $campana)->with('ok', 'Campaña regenerada.');
-    }
-
-    /** Volver al texto original que entregó la IA */
-    public function restore(Campana $campana): RedirectResponse
-    {
-        Gate::authorize('update', $campana);
-
-        if ($campana->texto_ia) {
-            $campana->aplicarGeneracion($campana->texto_ia);
-            $campana->save();
-        }
-
-        return redirect()->route('campanas.show', $campana)->with('ok', 'Se restauró el texto original.');
-    }
-
-    public function destroy(Request $request, Campana $campana): RedirectResponse
+    public function destroy(Campana $campana): RedirectResponse
     {
         Gate::authorize('delete', $campana);
 
         $producto = $campana->producto;
         $campana->delete();
 
-        return $request->input('volver') === 'producto'
-            ? redirect()->route('productos.show', $producto)->with('ok', 'Campaña eliminada.')
-            : redirect()->route('campanas.index')->with('ok', 'Campaña eliminada.');
+        return redirect()->route('productos.show', $producto)->with('ok', 'Campaña eliminada.');
     }
 }

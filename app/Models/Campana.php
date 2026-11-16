@@ -26,15 +26,6 @@ class Campana extends Model
         'elegante' => ['nombre' => 'Elegante', 'ejemplo' => '“El detalle que define un espacio.”'],
     ];
 
-    /** Piezas editables de una campaña: campo => etiqueta */
-    public const PIEZAS = [
-        'eslogan' => 'Eslogan',
-        'publicacion' => 'Publicación',
-        'hashtags' => 'Hashtags',
-        'cta' => 'CTA',
-        'idea_imagen' => 'Idea de imagen',
-    ];
-
     protected $table = 'campanas';
 
     protected $fillable = [
@@ -46,16 +37,12 @@ class Campana extends Model
         'cta',
         'idea_imagen',
         'prompt_imagen',
-        'texto_ia',
-        'editada',
     ];
 
     protected function casts(): array
     {
         return [
             'hashtags' => 'array',
-            'texto_ia' => 'array',
-            'editada' => 'boolean',
         ];
     }
 
@@ -90,14 +77,6 @@ class Campana extends Model
         ])));
     }
 
-    /** Aplica la respuesta de la IA y la respalda en texto_ia para poder volver a ella. */
-    public function aplicarGeneracion(array $datos): void
-    {
-        $this->fill($datos);
-        $this->texto_ia = $datos;
-        $this->editada = false;
-    }
-
     /** Tamaño de la imagen según el formato de la red: [ancho, alto] */
     public function formatoImagen(): array
     {
@@ -109,9 +88,8 @@ class Campana extends Model
     }
 
     /**
-     * URL de la imagen generada por IA (Pollinations). Usa el prompt en inglés de Groq,
-     * salvo que el usuario haya editado la idea de imagen: entonces usa su texto.
-     * La semilla depende del prompt, así la imagen cambia al regenerar o editar.
+     * URL de la imagen generada por IA (Pollinations). Usa el prompt en inglés que escribe
+     * Groq; si no vino, usa la idea de imagen en español.
      */
     public function urlImagen(): ?string
     {
@@ -119,10 +97,7 @@ class Campana extends Model
             return null;
         }
 
-        $ideaOriginal = $this->texto_ia['idea_imagen'] ?? null;
-        $base = ($this->prompt_imagen && $this->idea_imagen === $ideaOriginal)
-            ? $this->prompt_imagen
-            : $this->idea_imagen.'. Producto: '.$this->producto->nombre;
+        $base = $this->prompt_imagen ?: $this->idea_imagen.'. Producto: '.$this->producto->nombre;
         $prompt = $base.', professional advertising product photography, high quality, no text, no watermark';
 
         [$ancho, $alto] = $this->formatoImagen();
